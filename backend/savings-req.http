@@ -1,0 +1,23 @@
+### GET SAVINGS
+GET http://localhost:4000/api/savings-api/get-savings?month=2026-06
+
+###
+
+### ADD SAVINGS GOAL
+POST http://localhost:4000/api/savings-api/goal
+Content-Type: application/json
+
+{
+  "savingsGoal": 30000,
+  "month": "2026-06"
+}
+
+###
+
+### GET SAVINGS GOAL
+GET http://localhost:4000/api/savings-api/goal?month=2026-06
+
+###
+
+### DELETE SAVINGS GOAL
+DELETE http://localhost:4000/api/savings-api/goal?month=2026-06

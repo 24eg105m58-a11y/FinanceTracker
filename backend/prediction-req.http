@@ -1,0 +1,2 @@
+### NEXT MONTH PREDICTION
+GET http://localhost:4000/api/prediction-api/nextMonth?month=2026-06

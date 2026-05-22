@@ -1,0 +1,19 @@
+### ADD BUDGET
+POST http://localhost:4000/api/budget-api/addBudget
+Content-Type: application/json
+
+{
+  "category": "food",
+  "limit": 10000,
+  "month": "2026-06"
+}
+
+###
+
+### GET BUDGETS
+GET http://localhost:4000/api/budget-api/getBudgets?month=2026-06
+
+###
+
+### DELETE BUDGET
+DELETE http://localhost:4000/api/budget-api/deleteBudget?category=food&month=2026-06

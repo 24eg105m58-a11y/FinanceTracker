@@ -1,0 +1,44 @@
+### REGISTER
+POST http://localhost:4000/api/user-api/users
+Content-Type: application/json
+
+{
+  "Name": "Liri",
+  "email": "liri@gmail.com",
+  "password": "12345678",
+  "Mob_num": "9876543210"
+}
+
+###
+
+### LOGIN
+POST http://localhost:4000/api/user-api/login
+Content-Type: application/json
+
+{
+  "email": "liri@gmail.com",
+  "password": "abcdefgh"
+}
+
+###
+
+### GET USER
+GET http://localhost:4000/api/user-api/user
+
+###
+
+### UPDATE USER
+PUT http://localhost:4000/api/user-api/updateUser
+Content-Type: application/json
+
+{
+  "Name": "Liri Krishna",
+  "Mob_num": "9876543210",
+  "currentPassword": "12345678",
+  "newPassword": "abcdefgh"
+}
+
+###
+
+### LOGOUT
+GET http://localhost:4000/api/user-api/logout

@@ -1,0 +1,24 @@
+### ADD INCOME
+POST http://localhost:4000/api/income-api/addIncome
+Content-Type: application/json
+
+{
+  "income": 90000,
+  "month": "2026-06"
+}
+
+###
+
+### READ INCOME
+GET http://localhost:4000/api/income-api/readIncome?month=2026-06
+
+###
+
+### UPDATE INCOME
+PUT http://localhost:4000/api/income-api/updateIncome
+Content-Type: application/json
+
+{
+  "income": 100000,
+  "month": "2026-06"
+}

@@ -1,0 +1,20 @@
+### ADD EXPENSE
+POST http://localhost:4000/api/expense-api/addExpense
+Content-Type: application/json
+
+{
+  "title": "Pizza",
+  "amount": 500,
+  "category": "food",
+  "expenseDate": "2026-06-20"
+}
+
+###
+
+### GET EXPENSES
+GET http://localhost:4000/api/expense-api/getExpenses?month=2026-06
+
+###
+
+### DELETE EXPENSE
+DELETE http://localhost:4000/api/expense-api/deleteExpense/EXPENSE_ID

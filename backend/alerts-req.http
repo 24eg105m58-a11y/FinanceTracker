@@ -1,0 +1,7 @@
+### BUDGET ALERT
+GET http://localhost:4000/api/total-api/budgetAlert?month=2026-06
+
+###
+
+### SAVINGS ALERT
+GET http://localhost:4000/api/total-api/savingsAlert?month=2026-06

@@ -4,10 +4,18 @@ import {
   useSessionStore,
 } from "../store/sessionStore";
 
+const backendUrl =
+  (import.meta.env
+    .VITE_BACKEND_URL ||
+    ""
+  ).replace(/\/$/, "");
+
 const api = axios.create({
 
   baseURL:
-    `${import.meta.env.VITE_BACKEND_URL}/api`,
+    backendUrl
+      ? `${backendUrl}/api`
+      : "/api",
 
   withCredentials:
     true,

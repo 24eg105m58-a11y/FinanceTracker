@@ -19,9 +19,44 @@ config();
 
 const app = exp();
 
+app.set("trust proxy", 1);
+
+const parseOrigins = (value) =>
+  String(value || "")
+    .split(",")
+    .map((origin) =>
+      origin
+        .trim()
+        .replace(/\/$/, "")
+    )
+    .filter(Boolean);
+
+const configuredOrigins = parseOrigins(
+  process.env.CORS_ORIGIN
+);
+
+const defaultDevOrigins = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+];
+
+const allowedOrigins =
+  configuredOrigins.length > 0
+    ? configuredOrigins
+    : defaultDevOrigins;
+
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || "http://localhost:5173",
+    origin: (origin, callback) => {
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      return callback(
+        null,
+        allowedOrigins.includes(origin)
+      );
+    },
     credentials: true,
   })
 );

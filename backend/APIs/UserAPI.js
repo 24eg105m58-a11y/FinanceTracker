@@ -13,12 +13,27 @@ const { sign } = jwt;
 
 export const userApp = exp.Router();
 
-const cookieOptions = {
-  httpOnly: true,
-  secure: false,
-  sameSite: "lax",
-maxAge:
-  2 * 60 * 60 * 1000,
+const isSecureRequest = (req) =>
+  Boolean(
+    req.secure ||
+      String(
+        req.headers[
+          "x-forwarded-proto"
+        ] || ""
+      )
+        .split(",")[0]
+        .trim() === "https"
+  );
+
+const getCookieOptions = (req) => {
+  const secure = isSecureRequest(req);
+
+  return {
+    httpOnly: true,
+    secure,
+    sameSite: secure ? "none" : "lax",
+    maxAge: 2 * 60 * 60 * 1000,
+  };
 };
 
 const createToken = (user) => {
@@ -70,10 +85,10 @@ userApp.post("/users", async (req, res) => {
     }
 
     if (!/^[0-9]{10}$/.test(Mob_num.trim())) {
-  return res.status(400).json({
-    message: "Mobile number must be exactly 10 digits",
-  });
-}
+      return res.status(400).json({
+        message: "Mobile number must be exactly 10 digits",
+      });
+    }
 
     const existingUser = await UserModel.findOne({
       email: email.trim().toLowerCase(),
@@ -98,7 +113,11 @@ userApp.post("/users", async (req, res) => {
 
     const signedToken = createToken(newUserDoc);
 
-    res.cookie("token", signedToken, cookieOptions);
+    res.cookie(
+      "token",
+      signedToken,
+      getCookieOptions(req)
+    );
 
     const userObj = newUserDoc.toObject();
     delete userObj.password;
@@ -147,7 +166,11 @@ userApp.post("/login", async (req, res) => {
 
     const signedToken = createToken(user);
 
-    res.cookie("token", signedToken, cookieOptions);
+    res.cookie(
+      "token",
+      signedToken,
+      getCookieOptions(req)
+    );
 
     const userObj = user.toObject();
     delete userObj.password;
@@ -329,7 +352,10 @@ userApp.put(
 
 
 userApp.get("/logout", (req, res) => {
-  res.clearCookie("token", cookieOptions);
+  res.clearCookie(
+    "token",
+    getCookieOptions(req)
+  );
 
   res.status(200).json({
     message: "Logout success",

@@ -7,7 +7,7 @@ import {
 const api = axios.create({
 
   baseURL:
-    "http://localhost:4000/api",
+    `${import.meta.env.VITE_BACKEND_URL}/api`,
 
   withCredentials:
     true,
@@ -41,7 +41,7 @@ api.interceptors.response.use(
         ?.status === 401 &&
 
       currentPath !==
-        "/login"
+      "/login"
     ) {
 
       useSessionStore

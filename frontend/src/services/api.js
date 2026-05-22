@@ -9,7 +9,7 @@ const backendUrl =
     .VITE_BACKEND_URL ||
     ""
   ).replace(/\/$/, "");
-
+console.log(import.meta.env.VITE_BACKEND_URL);
 const api = axios.create({
 
   baseURL:

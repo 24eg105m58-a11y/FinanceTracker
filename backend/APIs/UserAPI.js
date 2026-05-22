@@ -16,13 +16,13 @@ export const userApp = exp.Router();
 const isSecureRequest = (req) =>
   Boolean(
     req.secure ||
-      String(
-        req.headers[
-          "x-forwarded-proto"
-        ] || ""
-      )
-        .split(",")[0]
-        .trim() === "https"
+    String(
+      req.headers[
+      "x-forwarded-proto"
+      ] || ""
+    )
+      .split(",")[0]
+      .trim() === "https"
   );
 
 const getCookieOptions = (req) => {
@@ -30,8 +30,8 @@ const getCookieOptions = (req) => {
 
   return {
     httpOnly: true,
-    secure,
-    sameSite: secure ? "none" : "lax",
+    secure: true,
+    sameSite: "none",
     maxAge: 2 * 60 * 60 * 1000,
   };
 };

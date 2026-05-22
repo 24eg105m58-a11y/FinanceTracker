@@ -21,42 +21,34 @@ const app = exp();
 
 app.set("trust proxy", 1);
 
-const parseOrigins = (value) =>
-  String(value || "")
-    .split(",")
-    .map((origin) =>
-      origin
-        .trim()
-        .replace(/\/$/, "")
-    )
-    .filter(Boolean);
+// ======================================================
+// CORS CONFIG
+// ======================================================
 
-const configuredOrigins = parseOrigins(
-  process.env.CORS_ORIGIN
-);
-
-const defaultDevOrigins = [
+const allowedOrigins = [
   "http://localhost:5173",
   "http://127.0.0.1:5173",
+  "https://finance-tracker-seven-lake.vercel.app",
 ];
-
-const allowedOrigins =
-  configuredOrigins.length > 0
-    ? configuredOrigins
-    : defaultDevOrigins;
 
 app.use(
   cors({
-    origin: (origin, callback) => {
+    origin: function (origin, callback) {
+
+      // ALLOW POSTMAN / MOBILE APPS
       if (!origin) {
         return callback(null, true);
       }
 
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
       return callback(
-        null,
-        allowedOrigins.includes(origin)
+        new Error("Not allowed by CORS")
       );
     },
+
     credentials: true,
   })
 );
@@ -65,7 +57,9 @@ app.use(cookieParser());
 
 app.use(exp.json());
 
-
+// ======================================================
+// ROUTES
+// ======================================================
 
 app.use("/api/user-api", userApp);
 
@@ -87,10 +81,21 @@ app.use("/api/prediction-api", predictionApp);
 
 app.use("/api/report-api", reportApp);
 
+// ======================================================
+// HEALTH CHECK
+// ======================================================
+
+app.get("/", (req, res) => {
+  res.send("Finance Tracker Backend Running");
+});
+
+// ======================================================
 // DATABASE CONNECTION
+// ======================================================
 
 const connectDB = async () => {
   try {
+
     await connect(process.env.DB_URL);
 
     console.log(
@@ -105,7 +110,9 @@ const connectDB = async () => {
         `Server listening on port ${port}`
       )
     );
+
   } catch (err) {
+
     console.log(
       "Error in DB connection",
       err
@@ -115,12 +122,19 @@ const connectDB = async () => {
 
 connectDB();
 
-// Error handling middleware
-
+// ======================================================
+// ERROR HANDLER
+// ======================================================
 
 app.use((err, req, res, next) => {
 
   console.log(err);
+
+  if (err.message === "Not allowed by CORS") {
+    return res.status(403).json({
+      message: "CORS blocked this request",
+    });
+  }
 
   if (err.status) {
     return res.status(err.status).json({

@@ -1,11 +1,6 @@
-import {
-  useEffect,
-} from "react";
+import { useEffect } from "react";
 
-import {
-  createBrowserRouter,
-  RouterProvider,
-} from "react-router";
+import { createBrowserRouter, RouterProvider } from "react-router";
 
 import RootLayout from "./components/RootLayout";
 
@@ -20,148 +15,96 @@ import Profile from "./components/Profile";
 
 import SessionExpiredModal from "./components/SessionExpiredModal";
 
-import {
-  useSessionStore,
-} from "./store/sessionStore";
+import { useSessionStore } from "./store/sessionStore";
 
 function App() {
-
-  const {
-    sessionExpired,
-  } = useSessionStore();
+  const { sessionExpired } = useSessionStore();
 
   // AUTO SESSION EXPIRY CHECK
 
-  const expiry =
-  localStorage.getItem(
-    "sessionExpiry"
-  );
-
-useEffect(() => {
-
-  const interval =
-    setInterval(() => {
-
-      const expiry =
-        localStorage.getItem(
-          "sessionExpiry"
-        );
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const expiry = localStorage.getItem("sessionExpiry");
 
       if (!expiry) {
         return;
       }
 
-      const isExpired =
-        Date.now() >=
-        Number(expiry);
+      const isExpired = Date.now() >= Number(expiry);
 
       if (isExpired) {
+        localStorage.removeItem("sessionExpiry");
 
-        localStorage.removeItem(
-          "sessionExpiry"
-        );
+        useSessionStore.getState().setSessionExpired(true);
 
-        useSessionStore
-          .getState()
-          .setSessionExpired(
-            true
-          );
-
-        clearInterval(
-          interval
-        );
+        clearInterval(interval);
       }
-
     }, 1000);
 
-  return () =>
-    clearInterval(
-      interval
-    );
-
-}, [expiry]);
+    return () => clearInterval(interval);
+  }, []);
 
   // ROUTES
 
-  const routerObj =
-    createBrowserRouter([
-      {
-        path: "/",
+  const routerObj = createBrowserRouter([
+    {
+      path: "/",
 
-        element:
-          <RootLayout />,
+      element: <RootLayout />,
 
-        children: [
+      errorElement: <Home />,
 
-          {
-            path: "",
+      children: [
+        {
+          index: true,
 
-            element:
-              <Home />,
-          },
+          element: <Home />,
+        },
 
-          {
-            path:
-              "register",
+        {
+          path: "register",
 
-            element:
-              <Register />,
-          },
+          element: <Register />,
+        },
 
-          {
-            path:
-              "login",
+        {
+          path: "login",
 
-            element:
-              <Login />,
-          },
+          element: <Login />,
+        },
 
-          {
-            path:
-              "overall",
+        {
+          path: "overall",
 
-            element:
-              <Overall />,
-          },
+          element: <Overall />,
+        },
 
-          {
-            path:
-              "expenses",
+        {
+          path: "expenses",
 
-            element:
-              <Expenses />,
-          },
+          element: <Expenses />,
+        },
 
-          {
-            path:
-              "savings",
+        {
+          path: "savings",
 
-            element:
-              <Savings />,
-          },
+          element: <Savings />,
+        },
 
-          {
-            path:
-              "profile",
+        {
+          path: "profile",
 
-            element:
-              <Profile />,
-          },
-        ],
-      },
-    ]);
+          element: <Profile />,
+        },
+      ],
+    },
+  ]);
 
   return (
     <>
-      <RouterProvider
-        router={routerObj}
-      />
+      <RouterProvider router={routerObj} />
 
-      <SessionExpiredModal
-        open={
-          sessionExpired
-        }
-      />
+      <SessionExpiredModal open={sessionExpired} />
     </>
   );
 }

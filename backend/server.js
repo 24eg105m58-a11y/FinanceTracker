@@ -48,7 +48,7 @@ app.use(
         new Error("Not allowed by CORS")
       );
     },
-
+    origin: allowedOrigins,
     credentials: true,
   })
 );
@@ -60,26 +60,16 @@ app.use(exp.json());
 // ======================================================
 // ROUTES
 // ======================================================
-
-app.use("/api/user-api", userApp);
-
-app.use("/api/income-api", incomeApp);
-
-app.use("/api/expense-api", expenseApp);
-
-app.use("/api/saving-api", savingsApp);
-
-app.use("/api/budget-api", budApp);
-
-app.use("/api/alert-api", totalApp);
-
-app.use("/api/insight-api", insightsApp);
-
-app.use("/api/receipt-api", receiptApp);
-
-app.use("/api/prediction-api", predictionApp);
-
-app.use("/api/report-api", reportApp);
+app.use("/user-api", userApp);
+app.use("/income-api", incomeApp);
+app.use("/expense-api", expenseApp);
+app.use("/savings-api", savingsApp);
+app.use("/budget-api", budApp);
+app.use("/alert-api", totalApp);
+app.use("/insight-api", insightsApp);
+app.use("/receipt-api", receiptApp);
+app.use("/prediction-api", predictionApp);
+app.use("/report-api", reportApp);
 
 // ======================================================
 // HEALTH CHECK

@@ -5,30 +5,53 @@ config();
 
 const { verify } = jwt;
 
-export const verifyToken = (req, res, next) => {
+export const verifyToken = (
+  req,
+  res,
+  next
+) => {
+
   try {
-    const cookieToken = req.cookies?.token;
 
-    const bearerToken = req.headers.authorization?.startsWith("Bearer ")
-      ? req.headers.authorization.split(" ")[1]
-      : null;
+    const cookieToken =
+      req.cookies?.token;
 
-    const token = cookieToken || bearerToken;
+    const bearerToken =
+      req.headers.authorization?.startsWith(
+        "Bearer "
+      )
+        ? req.headers.authorization.split(
+          " "
+        )[1]
+        : null;
+
+    const token =
+      cookieToken ||
+      bearerToken;
 
     if (!token) {
+
       return res.status(401).json({
-        message: "Please login",
+        message:
+          "Authentication required",
       });
     }
 
-    const decodedToken = verify(token, process.env.SECRET_KEY);
+    const decoded =
+      verify(
+        token,
+        process.env.SECRET_KEY
+      );
 
-    req.user = decodedToken;
+    req.user = decoded;
 
     next();
+
   } catch (err) {
-    res.status(401).json({
-      message: "Session expired. Please login again",
+
+    return res.status(401).json({
+      message:
+        "Session expired",
     });
   }
 };

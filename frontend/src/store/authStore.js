@@ -1,8 +1,9 @@
 import { create } from "zustand";
+
 import api from "../services/api";
 
 export const useAuth =
-  create((set) => ({
+  create((set, get) => ({
 
     currentUser: null,
 
@@ -16,18 +17,87 @@ export const useAuth =
 
     authChecked: false,
 
+    // =========================================
+    // CLEAR AUTH
+    // =========================================
+
     clearAuth: () =>
+
       set({
+
         currentUser: null,
+
         isAuthenticated: false,
+
         error: null,
+
         loading: false,
+
         isNewUser: false,
+
+        authChecked: true,
       }),
 
-    // =====================================================
+    // =========================================
+    // CHECK AUTH
+    // =========================================
+
+    checkAuth: async () => {
+
+      // avoid repeated checks
+      if (get().authChecked) {
+        return;
+      }
+
+      try {
+
+        set({
+          loading: true,
+        });
+
+        const res =
+          await api.get(
+            "/user-api/user"
+          );
+
+        set({
+
+          currentUser:
+            res.data.payload,
+
+          isAuthenticated:
+            true,
+
+          loading: false,
+
+          error: null,
+
+          authChecked: true,
+        });
+
+      } catch (err) {
+
+        // PUBLIC USERS SHOULD NOT
+        // SEE SESSION EXPIRED
+
+        set({
+
+          currentUser: null,
+
+          isAuthenticated: false,
+
+          loading: false,
+
+          error: null,
+
+          authChecked: true,
+        });
+      }
+    },
+
+    // =========================================
     // REGISTER
-    // =====================================================
+    // =========================================
 
     register: async (
       userObj
@@ -39,16 +109,13 @@ export const useAuth =
 
           loading: true,
 
-          currentUser:
-            null,
+          currentUser: null,
 
-          isAuthenticated:
-            false,
+          isAuthenticated: false,
 
           error: null,
 
-          isNewUser:
-            false,
+          isNewUser: false,
         });
 
         const res =
@@ -68,58 +135,40 @@ export const useAuth =
 
               password:
                 userObj.password,
-            },
-
-            {
-              withCredentials:
-                true,
             }
           );
 
-        if (
-          res.status ===
-          201
-        ) {
+        set({
 
-          set({
+          currentUser:
+            res.data.payload,
 
-            currentUser:
-              res.data.payload,
+          loading: false,
 
-            loading:
-              false,
+          isAuthenticated: true,
 
-            isAuthenticated:
-              true,
+          error: null,
 
-            error: null,
+          isNewUser:
+            res.data.isNewUser,
 
-            isNewUser:
-              res.data
-                .isNewUser,
+          authChecked: true,
+        });
 
-            authChecked: true,
-          });
-
-          return res.data;
-        }
+        return res.data;
 
       } catch (err) {
 
         set({
 
-          loading:
-            false,
+          loading: false,
 
-          isAuthenticated:
-            false,
+          isAuthenticated: false,
 
-          currentUser:
-            null,
+          currentUser: null,
 
           error:
-            err.response
-              ?.data
+            err.response?.data
               ?.message ||
             "Registration failed",
 
@@ -130,9 +179,9 @@ export const useAuth =
       }
     },
 
-    // =====================================================
+    // =========================================
     // LOGIN
-    // =====================================================
+    // =========================================
 
     login: async (
       userCred
@@ -144,16 +193,13 @@ export const useAuth =
 
           loading: true,
 
-          currentUser:
-            null,
+          currentUser: null,
 
-          isAuthenticated:
-            false,
+          isAuthenticated: false,
 
           error: null,
 
-          isNewUser:
-            false,
+          isNewUser: false,
         });
 
         const res =
@@ -161,57 +207,39 @@ export const useAuth =
 
             "/user-api/login",
 
-            userCred,
-
-            {
-              withCredentials:
-                true,
-            }
+            userCred
           );
 
-        if (
-          res.status ===
-          200
-        ) {
+        set({
 
-          set({
+          currentUser:
+            res.data.payload,
 
-            currentUser:
-              res.data.payload,
+          loading: false,
 
-            loading:
-              false,
+          isAuthenticated: true,
 
-            isAuthenticated:
-              true,
+          error: null,
 
-            error: null,
+          isNewUser: false,
 
-            isNewUser:
-              false,
+          authChecked: true,
+        });
 
-            authChecked: true,
-          });
-
-          return res.data;
-        }
+        return res.data;
 
       } catch (err) {
 
         set({
 
-          loading:
-            false,
+          loading: false,
 
-          isAuthenticated:
-            false,
+          isAuthenticated: false,
 
-          currentUser:
-            null,
+          currentUser: null,
 
           error:
-            err.response
-              ?.data
+            err.response?.data
               ?.message ||
             "Login failed",
 
@@ -222,9 +250,9 @@ export const useAuth =
       }
     },
 
-    // =====================================================
+    // =========================================
     // LOGOUT
-    // =====================================================
+    // =========================================
 
     logout: async () => {
 
@@ -236,84 +264,24 @@ export const useAuth =
         });
 
         await api
-          .get("/user-api/logout", {
-            withCredentials: true,
-          })
-          .catch(() => {});
+          .get(
+            "/user-api/logout"
+          )
+          .catch(() => { });
+
+      } finally {
 
         set({
+
           currentUser: null,
+
           isAuthenticated: false,
+
           error: null,
+
           loading: false,
+
           isNewUser: false,
-          authChecked: true,
-        });
-
-      } catch (err) {
-
-        set({
-          currentUser: null,
-          isAuthenticated: false,
-          error: null,
-          loading: false,
-          isNewUser: false,
-          authChecked: true,
-        });
-      }
-    },
-
-    // =====================================================
-    // CHECK AUTH
-    // =====================================================
-
-    checkAuth: async () => {
-
-      try {
-
-        set({
-          loading: true,
-        });
-
-        const res =
-          await api.get(
-
-            "/user-api/user",
-
-            {
-              withCredentials:
-                true,
-            }
-          );
-
-        set({
-
-          currentUser:
-            res.data.payload,
-
-          isAuthenticated:
-            true,
-
-          loading:
-            false,
-
-          error: null,
-
-          authChecked: true,
-        });
-
-      } catch (err) {
-
-        set({
-
-          currentUser:
-            null,
-
-          isAuthenticated:
-            false,
-
-          loading:
-            false,
 
           authChecked: true,
         });

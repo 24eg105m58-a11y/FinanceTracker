@@ -23,13 +23,9 @@ import { useSessionStore } from "./store/sessionStore";
 import { useAuth } from "./store/authStore";
 
 function ProtectedOutlet() {
-  const isAuthenticated = useAuth(
-    (state) => state.isAuthenticated
-  );
+  const isAuthenticated = useAuth((state) => state.isAuthenticated);
 
-  const authChecked = useAuth(
-    (state) => state.authChecked
-  );
+  const authChecked = useAuth((state) => state.authChecked);
 
   const location = useLocation();
 
@@ -58,8 +54,6 @@ function App() {
   return (
     <>
       <RouterProvider router={routerObj} />
-
-      <SessionExpiredModal open={sessionExpired} />
     </>
   );
 }

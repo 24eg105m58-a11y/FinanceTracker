@@ -15,6 +15,8 @@ const normalizeMonth = (month) => {
 
 incomeApp.post("/addIncome", verifyToken, async (req, res) => {
   try {
+
+
     const month = normalizeMonth(req.body.month);
 
     const income = await incomeModel.findOneAndUpdate(
@@ -24,6 +26,7 @@ incomeApp.post("/addIncome", verifyToken, async (req, res) => {
       },
       {
         $set: {
+          userId: req.user.id,
           income: Number(req.body.income),
           month,
           incomeDate: new Date(),
@@ -36,9 +39,20 @@ incomeApp.post("/addIncome", verifyToken, async (req, res) => {
       }
     );
 
-    res.json({ message: "Income saved", payload: income });
+    res.json({
+      message: "Income saved",
+      payload: income,
+    });
+
+
   } catch (err) {
-    res.status(500).json({ message: err.message });
+
+
+    res.status(500).json({
+      message: err.message,
+    });
+
+
   }
 });
 
@@ -73,6 +87,7 @@ incomeApp.put("/updateIncome", verifyToken, async (req, res) => {
       },
       {
         $set: {
+          userId: req.user.id,
           income: Number(req.body.income),
           month,
           incomeDate: new Date(),
@@ -81,7 +96,7 @@ incomeApp.put("/updateIncome", verifyToken, async (req, res) => {
       {
         new: true,
         upsert: true,
-       runValidators: true,
+        runValidators: true,
       }
     );
 
@@ -93,3 +108,4 @@ incomeApp.put("/updateIncome", verifyToken, async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
+

@@ -56,7 +56,7 @@ const createToken = (user) => {
 };
 
 
-userApp.post("/users", async (req, res) => {
+userApp.post("/user-api/users", async (req, res) => {
   try {
     const { Name, email, password, Mob_num } = req.body;
 
@@ -142,7 +142,7 @@ userApp.post("/users", async (req, res) => {
 });
 
 
-userApp.post("/login", async (req, res) => {
+userApp.post("/user-api/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -195,7 +195,7 @@ userApp.post("/login", async (req, res) => {
 });
 
 
-userApp.get("/user", verifyToken, async (req, res) => {
+userApp.get("/user-api/user", verifyToken, async (req, res) => {
   try {
     const user = await UserModel.findById(req.user.id);
 
@@ -221,7 +221,7 @@ userApp.get("/user", verifyToken, async (req, res) => {
 
 
 userApp.put(
-  "/updateUser",
+  "/user-api/updateUser",
   verifyToken,
   async (req, res) => {
 
@@ -357,7 +357,7 @@ userApp.put(
 
 
 
-userApp.get("/logout", (req, res) => {
+userApp.get("/user-api/logout", (req, res) => {
   res.clearCookie(
     "token",
     getCookieOptions(req)

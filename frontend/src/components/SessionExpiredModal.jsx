@@ -1,83 +1,43 @@
-import {
-  useSessionStore,
-} from "../store/sessionStore";
+import { useSessionStore } from "../store/sessionStore";
 import { useAuth } from "../store/authStore";
-import api from "../services/api";
 
-function SessionExpiredModal({
-  open,
-}) {
+function SessionExpiredModal({ open }) {
+  const setSessionExpired = useSessionStore((state) => state.setSessionExpired);
 
-  const {
-    setSessionExpired,
-  } = useSessionStore();
+  const clearAuth = useAuth((state) => state.clearAuth);
 
-  const clearAuth = useAuth(
-    (state) => state.clearAuth
-  );
+  if (!open) return null;
 
-  if (!open) {
-    return null;
-  }
+  const onLoginAgain = () => {
+    setSessionExpired(false);
+
+    clearAuth();
+
+    try {
+      localStorage.removeItem("selectedDate");
+    } catch (err) {}
+
+    window.location.replace("/login");
+  };
 
   return (
     <div className="fixed inset-0 z-[9999] bg-black/40 backdrop-blur-sm flex items-center justify-center px-4">
-
       <div className="bg-white w-full max-w-md rounded-3xl shadow-2xl border border-slate-200 p-7">
-
-        {/* ICON */}
         <div className="w-16 h-16 rounded-full bg-gradient-to-br from-red-100 to-rose-100 flex items-center justify-center mx-auto mb-5">
-
-          <span className="text-3xl">
-            🔒
-          </span>
+          <span className="text-3xl">🔒</span>
         </div>
 
-        {/* TITLE */}
         <h2 className="text-2xl font-bold text-slate-800 text-center">
           Session Expired
         </h2>
 
-        {/* MESSAGE */}
         <p className="text-slate-500 text-center mt-3 leading-relaxed">
-
-          Your login session has expired.
-
-          Please login again
-          to continue using
-          Expense Tracker.
+          Your login session has expired. Please login again.
         </p>
 
-        {/* BUTTON */}
         <button
-          onClick={() => {
-
-  // RESET MODAL
-  setSessionExpired(
-    false
-  );
-
-  // RESET AUTH STATE
-  clearAuth();
-
-  // CLEAR SERVER COOKIE (BEST EFFORT)
-  api.get(
-    "/user-api/logout",
-    {
-      withCredentials: true,
-    }
-  ).catch(() => {});
-
-  // RESET MONTH
-  localStorage.removeItem(
-    "selectedDate"
-  );
-
-  // REDIRECT
-  window.location.href =
-    "/login";
-}}
-          className="mt-7 w-full py-3 rounded-2xl font-semibold text-white bg-gradient-to-r from-cyan-500 to-blue-500 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-lg"
+          onClick={onLoginAgain}
+          className="mt-7 w-full py-3 rounded-2xl font-semibold text-white bg-gradient-to-r from-cyan-500 to-blue-500"
         >
           Login Again
         </button>

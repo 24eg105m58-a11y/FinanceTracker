@@ -6,7 +6,7 @@ import { incomeModel } from "../models/IncomeModel.js";
 export const expenseApp = exp.Router();
 
 // ADD EXPENSE
-
+// userId
 expenseApp.post(
   "/addExpense",
   verifyToken,
@@ -19,8 +19,8 @@ expenseApp.post(
       const expenseDate =
         req.body.expenseDate
           ? new Date(
-              req.body.expenseDate
-            )
+            req.body.expenseDate
+          )
           : new Date();
 
       if (
@@ -58,7 +58,7 @@ expenseApp.post(
       // MONTH FORMAT
       const expenseMonth = `${expenseDate.getFullYear()}-${String(
         expenseDate.getMonth() +
-          1
+        1
       ).padStart(2, "0")}`;
 
       const startOfMonth =
@@ -72,33 +72,33 @@ expenseApp.post(
         new Date(
           expenseDate.getFullYear(),
           expenseDate.getMonth() +
-            1,
+          1,
           1
         );
-// INCOME
-const userIncome =
-  await incomeModel
-    .findOne({
-      userId,
+      // INCOME
+      const userIncome =
+        await incomeModel
+          .findOne({
+            userId,
 
-      month: {
-        $lte:
-          expenseMonth,
-      },
-    })
-    .sort({
-      month: -1,
-    });
+            month: {
+              $lte:
+                expenseMonth,
+            },
+          })
+          .sort({
+            month: -1,
+          });
 
-if (!userIncome) {
+      if (!userIncome) {
 
-  return res
-    .status(400)
-    .json({
-      message:
-        "Please add income first",
-    });
-}
+        return res
+          .status(400)
+          .json({
+            message:
+              "Please add income first",
+          });
+      }
 
       // EXISTING EXPENSES
       const existingExpenses =
@@ -125,7 +125,7 @@ if (!userIncome) {
             sum +
             Number(
               expense.amount ||
-                0
+              0
             ),
           0
         );
@@ -153,7 +153,7 @@ if (!userIncome) {
         "incomeValue:",
         Number(
           userIncome?.income ||
-            0
+          0
         )
       );
 
@@ -175,10 +175,10 @@ if (!userIncome) {
       console.log(
         "comparison:",
         updatedTotalExpense >
-          Number(
-            userIncome?.income ||
-              0
-          )
+        Number(
+          userIncome?.income ||
+          0
+        )
       );
 
       console.log(
@@ -190,7 +190,7 @@ if (!userIncome) {
         updatedTotalExpense >
         Number(
           userIncome.income ||
-            0
+          0
         )
       ) {
         return res
@@ -205,7 +205,7 @@ if (!userIncome) {
         new expenseModel({
           item: String(
             req.body.item ||
-              ""
+            ""
           ).trim(),
 
           amount:
@@ -214,7 +214,7 @@ if (!userIncome) {
           category:
             String(
               req.body.category ||
-                "others"
+              "others"
             )
               .trim()
               .toLowerCase(),

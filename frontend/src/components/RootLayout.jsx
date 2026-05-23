@@ -1,23 +1,18 @@
-import Header from "./Header";
 import { Outlet } from "react-router";
-import { useEffect } from "react";
-import { useAuth } from "../store/authStore";
+
+import SessionExpiredModal from "./SessionExpiredModal";
+
+import { useSessionStore } from "../store/sessionStore";
 
 function RootLayout() {
-  const checkAuth = useAuth((state) => state.checkAuth);
-
-  useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+  const sessionExpired = useSessionStore((state) => state.sessionExpired);
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <Header />
+    <>
+      <Outlet />
 
-      <div className="grow">
-        <Outlet />
-      </div>
-    </div>
+      <SessionExpiredModal open={sessionExpired} />
+    </>
   );
 }
 

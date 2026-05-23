@@ -1,119 +1,67 @@
 import axios from "axios";
 
-import {
-  useSessionStore,
-} from "../store/sessionStore";
+import { useSessionStore } from "../store/sessionStore";
+import { useAuth } from "../store/authStore";
 
-const backendUrl =
-  (import.meta.env
-    .VITE_BACKEND_URL ||
-    ""
-  ).replace(/\/$/, "");
-
-const PUBLIC_PATHS = new Set([
+const publicRoutes = [
   "/",
   "/login",
   "/register",
-]);
-
-const isPublicPath = (
-  pathname
-) =>
-  PUBLIC_PATHS.has(
-    pathname
-  );
-
-const showSessionExpiredIfNeeded =
-  () => {
-
-    const sessionState =
-      useSessionStore.getState();
-
-    if (
-      sessionState
-        .sessionExpired
-    ) {
-      return;
-    }
-
-    import(
-      "../store/authStore"
-    )
-      .then(
-        ({ useAuth }) => {
-
-          const authState =
-            useAuth.getState();
-
-          if (
-            !authState.isAuthenticated
-          ) {
-            return;
-          }
-
-          authState.clearAuth?.();
-          sessionState.setSessionExpired(
-            true
-          );
-        }
-      )
-      .catch(() => {
-        // ignore
-      });
-  };
-
-const requestUrlIncludes =
-  (error, needle) => {
-    const url =
-      error?.config?.url;
-
-    return String(
-      url || ""
-    ).includes(needle);
-  };
+];
 
 const api = axios.create({
-
-  baseURL:
-    backendUrl
-      ? `${backendUrl}/api`
-      : "/api",
-
-  withCredentials:
-    true,
-
-  headers: {
-    "Content-Type":
-      "application/json",
-  },
+  baseURL: import.meta.env.VITE_BACKEND_URL,
+  withCredentials: true,
 });
 
-// =========================================================
+// ==========================================
 // RESPONSE INTERCEPTOR
-// =========================================================
+// ==========================================
 
 api.interceptors.response.use(
 
-  (response) =>
-    response,
+  (response) => response,
 
-  (error) => {
+  async (error) => {
+
+    const status =
+      error?.response?.status;
+
+    const requestUrl =
+      error?.config?.url || "";
 
     const currentPath =
       window.location.pathname;
 
-    if (
-      error.response
-        ?.status === 401 &&
-      !isPublicPath(
+    const isAuthCheckRequest =
+      requestUrl.includes(
+        "/user-api/user"
+      );
+
+    const isPublicPage =
+      publicRoutes.includes(
         currentPath
-      ) &&
-      !requestUrlIncludes(
-        error,
-        "/user-api/logout"
-      )
+      );
+
+    // ==========================================
+    // SESSION EXPIRED
+    // ==========================================
+
+    if (
+      status === 401 &&
+      !isPublicPage &&
+      !isAuthCheckRequest
     ) {
-      showSessionExpiredIfNeeded();
+
+      useSessionStore
+        .getState()
+        .setSessionExpired(
+          true
+        );
+
+      useAuth
+        .getState()
+        .clearAuth();
     }
 
     return Promise.reject(

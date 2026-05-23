@@ -8,13 +8,12 @@ import {
 
 import { useState } from "react";
 
-import ExpenseDonutChart from "./expenses/ExpenseDonutChart";
 import BudgetCard from "./budgets/BudgetCard";
 import AlertBanner from "./alerts/AlertBanner";
 import MonthlyReportCard from "./expenses/MonthlyReportCard";
 import InsightsPanel from "./InsightsPanel";
 import ReceiptScanner from "./expenses/ReceiptScanner";
-import ExpensePredictionCard from "./expenses/ExpensePredictionCard";
+import ExpenseDonutChart from "./expenses/ExpenseDonutChart";
 
 import ExpensesModal from "./expenses/ExpensesModal";
 import ExpenseFormModal from "./expenses/ExpenseFormModal";
@@ -22,210 +21,120 @@ import AddBudgetForm from "./budgets/AddBudgetForm";
 
 import { exportExpenseReport } from "../services";
 
-import {
-  useMonthStore,
-} from "../store/monthStore";
+import { useMonthStore } from "../store/monthStore";
 
 function Expenses() {
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  const [
-    refreshKey,
-    setRefreshKey,
-  ] = useState(0);
+  const { selectedDate, setSelectedDate } = useMonthStore();
 
-  const {
-    selectedDate,
-    setSelectedDate,
-  } = useMonthStore();
+  const selectedMonth = selectedDate.slice(0, 7);
 
-  const selectedMonth =
-    selectedDate.slice(0, 7);
+  const [showExpensesModal, setShowExpensesModal] = useState(false);
 
-  const [
-    showExpensesModal,
-    setShowExpensesModal,
-  ] = useState(false);
+  const [showExpenseForm, setShowExpenseForm] = useState(false);
 
-  const [
-    showExpenseForm,
-    setShowExpenseForm,
-  ] = useState(false);
+  const [showBudgetForm, setShowBudgetForm] = useState(false);
 
-  const [
-    showBudgetForm,
-    setShowBudgetForm,
-  ] = useState(false);
+  const refresh = () => setRefreshKey((key) => key + 1);
 
-  const refresh = () =>
-    setRefreshKey(
-      (key) => key + 1
-    );
+  const downloadCSV = async () => {
+    try {
+      const response = await exportExpenseReport(selectedMonth);
 
-  const downloadCSV =
-    async () => {
+      const blob = new Blob([response.data], {
+        type: "text/csv",
+      });
 
-      try {
+      const url = window.URL.createObjectURL(blob);
 
-        const response =
-          await exportExpenseReport(
-            selectedMonth
-          );
+      const link = document.createElement("a");
 
-        const blob =
-          new Blob(
-            [response.data],
-            {
-              type: "text/csv",
-            }
-          );
+      link.href = url;
 
-        const url =
-          window.URL.createObjectURL(
-            blob
-          );
+      link.download = `expenses-${selectedMonth}.csv`;
 
-        const link =
-          document.createElement(
-            "a"
-          );
+      document.body.appendChild(link);
 
-        link.href = url;
+      link.click();
 
-        link.download =
-          `expenses-${selectedMonth}.csv`;
-
-        document.body.appendChild(
-          link
-        );
-
-        link.click();
-
-        link.remove();
-
-      } catch (err) {
-
-        console.error(
-          "CSV download failed",
-          err
-        );
-      }
-    };
+      link.remove();
+    } catch (err) {
+      console.error("CSV download failed", err);
+    }
+  };
 
   return (
-    <div className={pageBackground}>
-
-      <div className={pageWrapper}>
-
+    <div className={`${pageBackground} overflow-x-hidden`}>
+      <div className={`${pageWrapper} w-full min-w-0`}>
         {/* HEADER */}
-        <div className="mb-5">
+        <div className="mb-5 min-w-0">
+          <h1 className={`${headingClass} break-words`}>Expenses</h1>
 
-          <h1 className={headingClass}>
-            Expenses
-          </h1>
-
-          <p
-            className={`${bodyText} mt-1 mb-4`}
-          >
-            Track your spending,
-            budgets, and monthly
-            expense insights
+          <p className={`${bodyText} mt-1 mb-4 break-words`}>
+            Track your spending, budgets, and monthly expense insights
           </p>
 
           {/* ACTION ROW */}
           <div className="flex flex-col xl:flex-row xl:items-end xl:justify-between gap-4">
-
             {/* DATE */}
-            <div>
-
+            <div className="w-full xl:w-auto">
               <label className="block text-xs font-medium text-slate-500 mb-1">
                 Select Date
               </label>
 
               <input
                 type="date"
-                value={
-                  selectedDate
-                }
-                onChange={(
-                  event
-                ) =>
-                  setSelectedDate(
-                    event.target
-                      .value
-                  )
-                }
-                className={`${inputClass} max-w-[220px]`}
+                value={selectedDate}
+                onChange={(event) => setSelectedDate(event.target.value)}
+                className={`${inputClass} w-full sm:max-w-[220px]`}
               />
             </div>
 
             {/* BUTTONS */}
-            <div className="flex flex-wrap gap-3 xl:justify-end">
-
+            <div className="flex flex-wrap gap-3 xl:justify-end w-full xl:w-auto">
               <button
                 onClick={() => {
+                  setShowExpenseForm(false);
 
-                  setShowExpenseForm(
-                    false
-                  );
+                  setShowBudgetForm(false);
 
-                  setShowBudgetForm(
-                    false
-                  );
-
-                  setShowExpensesModal(
-                    true
-                  );
+                  setShowExpensesModal(true);
                 }}
-                className="bg-gradient-to-r from-sky-500 to-cyan-500 hover:scale-[1.02] text-white font-semibold px-5 py-3 rounded-2xl transition-transform shadow-sm"
+                className="bg-gradient-to-r from-sky-500 to-cyan-500 hover:scale-[1.02] text-white font-semibold px-5 py-3 rounded-2xl transition-transform shadow-sm whitespace-nowrap"
               >
                 All Expenses
               </button>
 
               <button
                 onClick={() => {
+                  setShowExpensesModal(false);
 
-                  setShowExpensesModal(
-                    false
-                  );
+                  setShowBudgetForm(false);
 
-                  setShowBudgetForm(
-                    false
-                  );
-
-                  setShowExpenseForm(
-                    true
-                  );
+                  setShowExpenseForm(true);
                 }}
-                className="bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:scale-[1.02] text-white font-semibold px-5 py-3 rounded-2xl transition-transform shadow-sm"
+                className="bg-gradient-to-r from-violet-500 to-fuchsia-500 hover:scale-[1.02] text-white font-semibold px-5 py-3 rounded-2xl transition-transform shadow-sm whitespace-nowrap"
               >
                 Add Expense
               </button>
 
               <button
                 onClick={() => {
+                  setShowExpensesModal(false);
 
-                  setShowExpensesModal(
-                    false
-                  );
+                  setShowExpenseForm(false);
 
-                  setShowExpenseForm(
-                    false
-                  );
-
-                  setShowBudgetForm(
-                    true
-                  );
+                  setShowBudgetForm(true);
                 }}
-                className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:scale-[1.02] text-white font-semibold px-5 py-3 rounded-2xl transition-transform shadow-sm"
+                className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:scale-[1.02] text-white font-semibold px-5 py-3 rounded-2xl transition-transform shadow-sm whitespace-nowrap"
               >
                 Set Budget
               </button>
 
               <button
-                onClick={
-                  downloadCSV
-                }
-                className="bg-gradient-to-r from-orange-500 to-amber-500 hover:scale-[1.02] text-white font-semibold px-5 py-3 rounded-2xl transition-transform shadow-sm"
+                onClick={downloadCSV}
+                className="bg-gradient-to-r from-orange-500 to-amber-500 hover:scale-[1.02] text-white font-semibold px-5 py-3 rounded-2xl transition-transform shadow-sm whitespace-nowrap"
               >
                 Download CSV
               </button>
@@ -234,129 +143,85 @@ function Expenses() {
         </div>
 
         {/* MONTHLY REPORT */}
-        <div className="mb-4">
-
+        <div className="mb-4 w-full min-w-0 overflow-hidden">
           <MonthlyReportCard
             key={`monthly-${refreshKey}-${selectedMonth}`}
-            selectedMonth={
-              selectedMonth
-            }
+            selectedMonth={selectedMonth}
           />
         </div>
 
         {/* ALERTS */}
-        <div className="mb-6">
-
+        <div className="mb-6 w-full min-w-0 overflow-hidden">
           <AlertBanner
             key={`alert-${refreshKey}-${selectedMonth}`}
-            selectedMonth={
-              selectedMonth
-            }
+            selectedMonth={selectedMonth}
           />
         </div>
 
         {/* CHARTS */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 mb-6">
+          <div className="w-full min-w-0 overflow-hidden">
+            <ExpenseDonutChart
+              key={`chart-${refreshKey}-${selectedMonth}`}
+              selectedMonth={selectedMonth}
+            />
+          </div>
 
-          <ExpenseDonutChart
-            key={`chart-${refreshKey}-${selectedMonth}`}
-            selectedMonth={
-              selectedMonth
-            }
-          />
-
-          <BudgetCard
-            key={`budget-${refreshKey}-${selectedMonth}`}
-            selectedMonth={
-              selectedMonth
-            }
-          />
+          <div className="w-full min-w-0 overflow-hidden">
+            <BudgetCard
+              key={`budget-${refreshKey}-${selectedMonth}`}
+              selectedMonth={selectedMonth}
+            />
+          </div>
         </div>
 
-        {/* RECEIPT + AI */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6 items-stretch">
-
-          <ReceiptScanner
-            onSuccess={
-              refresh
-            }
-          />
-<ExpensePredictionCard
-  key={`prediction-${refreshKey}-${selectedMonth}`}
-  selectedMonth={
-    selectedMonth
-  }
-/>
+        {/* RECEIPT */}
+        <div className="grid grid-cols-1 gap-5 mb-6 items-stretch">
+          <div className="w-full min-w-0 overflow-hidden">
+            <ReceiptScanner onSuccess={refresh} />
+          </div>
         </div>
 
         {/* INSIGHTS */}
-        <InsightsPanel
-          key={`insights-${refreshKey}-${selectedMonth}`}
-          selectedMonth={
-            selectedMonth
-          }
-        />
+        <div className="w-full min-w-0 overflow-hidden">
+          <InsightsPanel
+            key={`insights-${refreshKey}-${selectedMonth}`}
+            selectedMonth={selectedMonth}
+          />
+        </div>
 
         {/* ALL EXPENSES MODAL */}
         {showExpensesModal && (
-
           <ExpensesModal
-            selectedMonth={
-              selectedMonth
-            }
-            onRefresh={
-              refresh
-            }
-            onClose={() =>
-              setShowExpensesModal(
-                false
-              )
-            }
+            selectedMonth={selectedMonth}
+            onRefresh={refresh}
+            onClose={() => setShowExpensesModal(false)}
           />
         )}
 
         {/* ADD EXPENSE MODAL */}
         {showExpenseForm && (
-
           <ExpenseFormModal
-            selectedMonth={
-              selectedMonth
-            }
-            onClose={() =>
-              setShowExpenseForm(
-                false
-              )
-            }
+            selectedMonth={selectedMonth}
+            onClose={() => setShowExpenseForm(false)}
             onSaved={() => {
-
               refresh();
 
-              setShowExpenseForm(
-                false
-              );
+              setShowExpenseForm(false);
             }}
           />
         )}
-        
+
+        {/* BUDGET FORM */}
         {showBudgetForm && (
-
           <AddBudgetForm
-            selectedMonth={
-              selectedMonth
-            }
+            selectedMonth={selectedMonth}
             onSuccess={() => {
-
               refresh();
 
-              setShowBudgetForm(
-                false
-              );
+              setShowBudgetForm(false);
             }}
-            onClose={() =>
-              setShowBudgetForm(
-                false
-              )
-            }
+            onClose={() => setShowBudgetForm(false)}
           />
         )}
       </div>

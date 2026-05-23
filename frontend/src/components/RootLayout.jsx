@@ -1,5 +1,5 @@
 import { Outlet } from "react-router";
-
+import Header from "./Header";
 import SessionExpiredModal from "./SessionExpiredModal";
 
 import { useSessionStore } from "../store/sessionStore";
@@ -9,6 +9,7 @@ function RootLayout() {
 
   return (
     <>
+      <Header />
       <Outlet />
 
       <SessionExpiredModal open={sessionExpired} />

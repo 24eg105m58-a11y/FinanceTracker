@@ -33,142 +33,170 @@ import AlertPanel from "./AlertPanel";
 import { useMonthStore } from "../store/monthStore";
 
 function Overall() {
-  const { selectedDate, setSelectedDate } = useMonthStore();
+  const { isNewUser } = useAuth(
+    (state) => state,
+  );
 
-  const selectedMonth = selectedDate.slice(0, 7);
+  const {
+    selectedDate,
+    setSelectedDate,
+  } = useMonthStore();
 
-  const [showIncomeDetails, setShowIncomeDetails] = useState(false);
+  const selectedMonth =
+    selectedDate.slice(0, 7);
 
-  const [income, setIncome] = useState(null);
+  const [showIncomeDetails, setShowIncomeDetails] =
+    useState(false);
 
-  const [expenses, setExpenses] = useState([]);
+  const [income, setIncome] =
+    useState(null);
 
-  const [budgetAlert, setBudgetAlert] = useState(null);
+  const [expenses, setExpenses] =
+    useState([]);
 
-  const [savingsAlert, setSavingsAlert] = useState(null);
+  const [budgetAlert, setBudgetAlert] =
+    useState(null);
 
-  const [showIncomePopup, setShowIncomePopup] = useState(false);
+  const [
+    savingsAlert,
+    setSavingsAlert,
+  ] = useState(null);
 
-  const [loading, setLoading] = useState(true);
+  const [
+    showIncomePopup,
+    setShowIncomePopup,
+  ] = useState(false);
 
-  // =========================================
-  // FETCH DATA
-  // =========================================
+  const [loading, setLoading] =
+    useState(true);
 
-  const fetchOverallData = async () => {
-    try {
-      setLoading(true);
+  const fetchOverallData =
+    async () => {
+      try {
+        setLoading(true);
 
-      const [incomeRes, expenseRes, budgetAlertRes, savingsAlertRes] =
-        await Promise.all([
-          api.get("/income-api/readIncome", {
-            params: {
-              month: selectedMonth,
+        const [
+          incomeRes,
+          expenseRes,
+          budgetAlertRes,
+          savingsAlertRes,
+        ] = await Promise.all([
+          api.get(
+            "/income-api/readIncome",
+            {
+              params: {
+                month:
+                  selectedMonth,
+              },
             },
-          }),
+          ),
 
-          api.get("/expense-api/readExpenses", {
-            params: {
-              month: selectedMonth,
+          api.get(
+            "/expense-api/readExpenses",
+            {
+              params: {
+                month:
+                  selectedMonth,
+              },
             },
-          }),
+          ),
 
-          api.get("/alert-api/budgetAlert", {
-            params: {
-              month: selectedMonth,
+          api.get(
+            "/alert-api/budgetAlert",
+            {
+              params: {
+                month:
+                  selectedMonth,
+              },
             },
-          }),
+          ),
 
-          api.get("/alert-api/savingsAlert", {
-            params: {
-              month: selectedMonth,
+          api.get(
+            "/alert-api/savingsAlert",
+            {
+              params: {
+                month:
+                  selectedMonth,
+              },
             },
-          }),
+          ),
         ]);
 
-      const fetchedIncome = incomeRes.data.payload;
+        const fetchedIncome =
+          incomeRes.data.payload;
 
-      setIncome(fetchedIncome);
+        setIncome(fetchedIncome);
 
-      setExpenses(expenseRes.data.payload || []);
+        setExpenses(
+          expenseRes.data.payload ||
+            [],
+        );
 
-      setBudgetAlert(budgetAlertRes.data);
+        setBudgetAlert(
+          budgetAlertRes.data,
+        );
 
-      setSavingsAlert(savingsAlertRes.data);
-    } catch (err) {
-      console.error("Overall dashboard fetch failed:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+        setSavingsAlert(
+          savingsAlertRes.data,
+        );
 
-  // =========================================
-  // FETCH ON MONTH CHANGE
-  // =========================================
+        // SHOW ONLY FOR NEW USER
+        // AND ONLY IF NO INCOME EXISTS
+        if (
+          !fetchedIncome &&
+          isNewUser
+        ) {
+          setShowIncomePopup(
+            true,
+          );
+        } else {
+          setShowIncomePopup(
+            false,
+          );
+        }
+      } catch (err) {
+        console.error(
+          "Overall dashboard fetch failed:",
+          err,
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
 
   useEffect(() => {
     fetchOverallData();
   }, [selectedDate]);
 
-  // =========================================
-  // HANDLE POPUP
-  // =========================================
-
-  useEffect(() => {
-    // WAIT FOR API
-    if (loading) return;
-
-    // INCOME EXISTS
-    if (income && Number(income.income) > 0) {
-      localStorage.setItem("incomeAdded", "true");
-
-      localStorage.removeItem("incomePopupDismissed");
-
-      setShowIncomePopup(false);
-
-      return;
-    }
-
-    // USER CLOSED POPUP
-    const dismissed = localStorage.getItem("incomePopupDismissed");
-
-    if (!dismissed) {
-      setShowIncomePopup(true);
-    }
-  }, [income, loading]);
-
-  // =========================================
-  // CLOSE POPUP
-  // =========================================
-
-  const handleCloseIncomePopup = () => {
-    localStorage.setItem("incomePopupDismissed", "true");
-
-    setShowIncomePopup(false);
-  };
-
-  // =========================================
-  // TOTALS
-  // =========================================
-
-  const totalIncome = Number(income?.income || 0);
-
-  const totalExpense = expenses.reduce(
-    (sum, expense) => sum + Number(expense.amount || 0),
-    0,
+  const totalIncome = Number(
+    income?.income || 0,
   );
 
-  const totalSavings = totalIncome - totalExpense;
+  const totalExpense =
+    expenses.reduce(
+      (sum, expense) =>
+        sum +
+        Number(
+          expense.amount || 0,
+        ),
+      0,
+    );
 
-  const chartData = buildCategoryChartData(expenses, totalIncome);
+  const totalSavings =
+    totalIncome -
+    totalExpense;
 
-  // =========================================
-  // LOADING
-  // =========================================
+  const chartData =
+    buildCategoryChartData(
+      expenses,
+      totalIncome,
+    );
 
   if (loading) {
     return (
-      <div className={`${pageBackground} flex items-center justify-center`}>
+      <div
+        className={`${pageBackground} flex items-center justify-center`}
+      >
         <p className="text-cyan-600 text-lg animate-pulse">
           Loading dashboard...
         </p>
@@ -177,46 +205,79 @@ function Overall() {
   }
 
   return (
-    <div className={`${pageBackground} overflow-x-hidden`}>
-      <div className={`${pageWrapper} w-full min-w-0`}>
+    <div
+      className={`${pageBackground} overflow-x-hidden`}
+    >
+      <div
+        className={`${pageWrapper} w-full min-w-0`}
+      >
         {/* INCOME POPUP */}
         {showIncomePopup && (
           <IncomePopup
-            onClose={handleCloseIncomePopup}
-            onIncomeAdded={(newIncome) => {
-              setIncome(newIncome);
+            selectedMonth={
+              selectedMonth
+            }
+            onClose={() =>
+              setShowIncomePopup(
+                false,
+              )
+            }
+            onIncomeAdded={(
+              newIncome,
+            ) => {
+              setIncome(
+                newIncome,
+              );
 
-              localStorage.setItem("incomeAdded", "true");
-
-              localStorage.removeItem("incomePopupDismissed");
-
-              setShowIncomePopup(false);
+              setShowIncomePopup(
+                false,
+              );
             }}
           />
         )}
 
-        {/* INCOME DETAILS */}
+        {/* MANAGE INCOME POPUP */}
         {showIncomeDetails && (
           <IncomeDetailsPopup
             income={income}
-            selectedMonth={selectedMonth}
-            onClose={() => setShowIncomeDetails(false)}
-            onIncomeUpdated={(updatedIncome) => setIncome(updatedIncome)}
+            selectedMonth={
+              selectedMonth
+            }
+            onClose={() =>
+              setShowIncomeDetails(
+                false,
+              )
+            }
+            onIncomeUpdated={(
+              updatedIncome,
+            ) =>
+              setIncome(
+                updatedIncome,
+              )
+            }
           />
         )}
 
         {/* TOP BAR */}
         <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-5 mb-8">
+          {/* LEFT */}
           <div className="min-w-0">
-            <h1 className={`${headingClass} break-words`}>
+            <h1
+              className={`${headingClass} break-words`}
+            >
               Financial Dashboard
             </h1>
 
-            <p className={`${bodyText} mt-2 break-words`}>
-              Track your monthly income, expenses, and savings insights
+            <p
+              className={`${bodyText} mt-2 break-words`}
+            >
+              Track your monthly
+              income, expenses, and
+              savings insights
             </p>
           </div>
 
+          {/* RIGHT */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-4 w-full xl:w-auto">
             <div className="w-full sm:w-auto">
               <label className="block text-xs font-medium text-slate-500 mb-1">
@@ -225,15 +286,25 @@ function Overall() {
 
               <input
                 type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
+                value={
+                  selectedDate
+                }
+                onChange={(e) =>
+                  setSelectedDate(
+                    e.target.value,
+                  )
+                }
                 className={`${inputClass} w-full sm:min-w-[200px]`}
               />
             </div>
 
             <button
               type="button"
-              onClick={() => setShowIncomeDetails(true)}
+              onClick={() =>
+                setShowIncomeDetails(
+                  true,
+                )
+              }
               className={`${primaryBtn} h-[48px] px-5 whitespace-nowrap`}
             >
               Manage Income
@@ -244,108 +315,221 @@ function Overall() {
         {/* SUMMARY */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 mb-8">
           {/* INCOME */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
-            <p className="text-sm font-medium text-slate-500 mb-2">Income</p>
+          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm hover:-translate-y-1 hover:shadow-lg transition-all duration-300 overflow-hidden">
+            <div className="flex items-center justify-between mb-4">
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-slate-500 mb-2">
+                  Income
+                </p>
 
-            <h2 className="text-4xl font-bold text-cyan-600">
-              ₹{totalIncome.toLocaleString()}
-            </h2>
+                <h2 className="text-2xl sm:text-3xl xl:text-4xl font-bold text-cyan-600 break-words">
+                  ₹
+                  {totalIncome.toLocaleString()}
+                </h2>
+              </div>
+            </div>
 
-            <p className="text-xs text-slate-400 mt-3">
+            <p className="text-xs text-slate-400">
               Total monthly earnings
             </p>
           </div>
 
-          {/* EXPENSE */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
-            <p className="text-sm font-medium text-slate-500 mb-2">Expenses</p>
+          {/* EXPENSES */}
+          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm hover:-translate-y-1 hover:shadow-lg transition-all duration-300 overflow-hidden">
+            <div className="flex items-center justify-between mb-4">
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-slate-500 mb-2">
+                  Expenses
+                </p>
 
-            <h2 className="text-4xl font-bold text-red-500">
-              ₹{totalExpense.toLocaleString()}
-            </h2>
+                <h2 className="text-2xl sm:text-3xl xl:text-4xl font-bold text-red-500 break-words">
+                  ₹
+                  {totalExpense.toLocaleString()}
+                </h2>
+              </div>
+            </div>
 
-            <p className="text-xs text-slate-400 mt-3">
+            <p className="text-xs text-slate-400">
               Current month spending
             </p>
           </div>
 
           {/* SAVINGS */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
-            <p className="text-sm font-medium text-slate-500 mb-2">Savings</p>
+          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm hover:-translate-y-1 hover:shadow-lg transition-all duration-300 overflow-hidden">
+            <div className="flex items-center justify-between mb-4">
+              <div className="min-w-0">
+                <p className="text-sm font-medium text-slate-500 mb-2">
+                  Savings
+                </p>
 
-            <h2
-              className={`text-4xl font-bold ${
-                totalSavings >= 0 ? "text-green-600" : "text-red-500"
-              }`}
-            >
-              ₹{totalSavings.toLocaleString()}
-            </h2>
+                <h2
+                  className={`text-2xl sm:text-3xl xl:text-4xl font-bold break-words ${
+                    totalSavings >= 0
+                      ? "text-green-600"
+                      : "text-red-500"
+                  }`}
+                >
+                  ₹
+                  {totalSavings.toLocaleString()}
+                </h2>
+              </div>
+            </div>
 
-            <p className="text-xs text-slate-400 mt-3">
-              Remaining monthly balance
+            <p className="text-xs text-slate-400">
+              Remaining monthly
+              balance
             </p>
           </div>
         </div>
 
-        {/* CHART */}
-        <div className={`${glassCard} mb-6`}>
-          <div className="flex items-center justify-between mb-5">
-            <div>
-              <h2 className={subHeadingClass}>Spending Overview</h2>
+        {/* GRAPH */}
+        <div
+          className={`${glassCard} bg-gradient-to-br from-white to-slate-50 border border-slate-200 shadow-[0_8px_30px_rgba(0,0,0,0.04)] min-h-[430px] mb-6 overflow-hidden`}
+        >
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+            <div className="min-w-0">
+              <h2
+                className={
+                  subHeadingClass
+                }
+              >
+                Spending Overview
+              </h2>
 
-              <p className="text-sm text-slate-400 mt-1">
-                Category-wise expense & savings analysis
+              <p className="text-sm text-slate-400 mt-1 break-words">
+                Category-wise
+                expense & savings
+                analysis
               </p>
+            </div>
+
+            <div className="bg-slate-100 text-slate-500 text-xs px-3 py-1 rounded-full whitespace-nowrap self-start sm:self-auto">
+              Monthly Analytics
             </div>
           </div>
 
-          <div className="w-full h-[350px]">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData} barGap={12}>
-                <CartesianGrid strokeDasharray="3 3" />
+          <div className="w-full overflow-x-auto">
+            <div className="min-w-[320px] h-[320px] sm:h-[350px]">
+              <ResponsiveContainer
+                width="100%"
+                height="100%"
+              >
+                <BarChart
+                  data={chartData}
+                  barGap={12}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    stroke="#e2e8f0"
+                    vertical={
+                      false
+                    }
+                  />
 
-                <XAxis dataKey="category" />
+                  <XAxis
+                    dataKey="category"
+                    tick={{
+                      fill:
+                        "#64748b",
+                      fontSize: 12,
+                    }}
+                    axisLine={
+                      false
+                    }
+                    tickLine={
+                      false
+                    }
+                  />
 
-                <YAxis />
+                  <YAxis
+                    tick={{
+                      fill:
+                        "#64748b",
+                      fontSize: 12,
+                    }}
+                    axisLine={
+                      false
+                    }
+                    tickLine={
+                      false
+                    }
+                  />
 
-                <Tooltip />
+                  <Tooltip
+                    contentStyle={{
+                      borderRadius:
+                        "16px",
+                      border:
+                        "1px solid #e2e8f0",
+                      boxShadow:
+                        "0 8px 24px rgba(0,0,0,0.08)",
+                    }}
+                  />
 
-                <Legend />
+                  <Legend />
 
-                <Bar
-                  dataKey="expenses"
-                  fill="#dc2626"
-                  name="Expenses"
-                  radius={[10, 10, 0, 0]}
-                />
+                  <Bar
+                    dataKey="expenses"
+                    fill="#dc2626"
+                    name="Expenses"
+                    radius={[
+                      10, 10, 0, 0,
+                    ]}
+                  />
 
-                <Bar
-                  dataKey="savings"
-                  fill="#16a34a"
-                  name="Savings"
-                  radius={[10, 10, 0, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
+                  <Bar
+                    dataKey="savings"
+                    fill="#16a34a"
+                    name="Savings"
+                    radius={[
+                      10, 10, 0, 0,
+                    ]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
         </div>
 
         {/* ALERTS */}
-        <div className={glassCard}>
-          <h2 className={`${subHeadingClass} mb-4`}>Alerts</h2>
+        <div
+          className={`${glassCard} border border-slate-200 shadow-[0_8px_30px_rgba(0,0,0,0.04)] overflow-hidden`}
+        >
+          <div className="flex items-center justify-between mb-5">
+            <div className="min-w-0">
+              <h2
+                className={
+                  subHeadingClass
+                }
+              >
+                Alerts
+              </h2>
 
-          <AlertPanel budgetAlert={budgetAlert} savingsAlert={savingsAlert} />
+              <p className="text-sm text-slate-400 mt-1 break-words">
+                Budget and savings
+                status
+              </p>
+            </div>
+          </div>
+
+          <AlertPanel
+            budgetAlert={
+              budgetAlert
+            }
+            savingsAlert={
+              savingsAlert
+            }
+          />
         </div>
       </div>
     </div>
   );
 }
 
-// =========================================
-// CHART DATA
-// =========================================
-
-function buildCategoryChartData(expenses, income) {
+function buildCategoryChartData(
+  expenses,
+  income,
+) {
   const categories = [
     "food",
     "travel",
@@ -355,27 +539,55 @@ function buildCategoryChartData(expenses, income) {
     "others",
   ];
 
-  const grouped = categories.reduce((acc, category) => {
-    acc[category] = 0;
+  const grouped =
+    categories.reduce(
+      (acc, category) => {
+        acc[category] = 0;
 
-    return acc;
-  }, {});
+        return acc;
+      },
+      {},
+    );
 
   expenses.forEach((expense) => {
-    const category = String(expense.category || "others").toLowerCase();
+    const category = String(
+      expense.category ||
+        "others",
+    ).toLowerCase();
 
-    const finalCategory = grouped[category] !== undefined ? category : "others";
+    const finalCategory =
+      grouped[category] !==
+      undefined
+        ? category
+        : "others";
 
-    grouped[finalCategory] += Number(expense.amount || 0);
+    grouped[
+      finalCategory
+    ] += Number(
+      expense.amount || 0,
+    );
   });
 
-  return categories.map((category) => ({
-    category: category.charAt(0).toUpperCase() + category.slice(1),
+  return categories.map(
+    (category) => ({
+      category:
+        category.charAt(0).toUpperCase() +
+        category.slice(1),
 
-    expenses: grouped[category],
+      expenses:
+        grouped[category],
 
-    savings: Math.max(Number(income || 0) - grouped[category], 0),
-  }));
+      savings: Math.max(
+        Number(
+          income || 0,
+        ) -
+          grouped[
+            category
+          ],
+        0,
+      ),
+    }),
+  );
 }
 
 export default Overall;

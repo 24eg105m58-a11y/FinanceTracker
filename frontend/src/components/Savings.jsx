@@ -1,3 +1,5 @@
+// Savings.jsx
+
 import { useEffect, useState } from "react";
 import api from "../services/api";
 
@@ -19,11 +21,8 @@ import {
   headingClass,
   bodyText,
   glassCard,
-  statCard,
-  statLabel,
-  statValue,
-  primaryBtn,
   inputClass,
+  primaryBtn,
   alertDanger,
   alertSuccess,
 } from "../styles/common";
@@ -53,9 +52,10 @@ function Savings() {
 
       const months = getYearMonths(year);
 
+      // FIXED: savings-api
       const monthlyResponses = await Promise.all(
         months.map((month) =>
-          api.get("/saving-api/get-savings", {
+          api.get("/savings-api/get-savings", {
             params: {
               month: month.value,
             },
@@ -66,7 +66,7 @@ function Savings() {
       const monthlyData = monthlyResponses.map((res, index) => ({
         month: months[index].label,
 
-        totalSavings: res.data.payload?.totalSavings || 0,
+        totalSavings: Number(res.data.payload?.totalSavings || 0),
       }));
 
       setChartData(monthlyData);
@@ -91,13 +91,18 @@ function Savings() {
         },
       });
 
+      console.log("Savings payload:", selectedSavingsRes.data);
+
       setSelectedSavings(selectedSavingsRes.data.payload);
 
       setGoal(goalRes.data.payload);
 
       setSavingsAlert(alertRes.data);
     } catch (err) {
-      console.error("Fetching savings failed:", err);
+      console.error(
+        "Fetching savings failed:",
+        err.response?.data || err.message,
+      );
     } finally {
       setLoading(false);
     }
@@ -107,11 +112,20 @@ function Savings() {
     fetchSavingsData();
   }, [selectedDate]);
 
-  const totalIncome = Number(selectedSavings?.totalIncome || 0);
+  const totalIncome =
+    selectedSavings?.totalIncome != null
+      ? Number(selectedSavings.totalIncome)
+      : 0;
 
-  const totalExpense = Number(selectedSavings?.totalExpense || 0);
+  const totalExpense =
+    selectedSavings?.totalExpense != null
+      ? Number(selectedSavings.totalExpense)
+      : 0;
 
-  const totalSavings = Number(selectedSavings?.totalSavings || 0);
+  const totalSavings =
+    selectedSavings?.totalSavings != null
+      ? Number(selectedSavings.totalSavings)
+      : 0;
 
   if (loading) {
     return (
@@ -139,7 +153,6 @@ function Savings() {
         {/* TOP BAR */}
         <div className="mb-8">
           <div className="flex flex-col xl:flex-row xl:items-end xl:justify-between gap-5">
-            {/* LEFT */}
             <div>
               <h1 className={headingClass}>Savings Overview</h1>
 
@@ -148,9 +161,7 @@ function Savings() {
               </p>
             </div>
 
-            {/* RIGHT */}
             <div className="flex flex-col sm:flex-row items-start sm:items-end gap-4">
-              {/* DATE */}
               <div>
                 <label className="block text-xs font-medium text-slate-500 mb-1">
                   Select Date
@@ -164,7 +175,6 @@ function Savings() {
                 />
               </div>
 
-              {/* BUTTON */}
               <button
                 type="button"
                 onClick={() => setShowGoalModal(true)}
@@ -179,59 +189,25 @@ function Savings() {
         {/* SUMMARY */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-8">
           {/* INCOME */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <p className="text-sm font-medium text-slate-500 mb-2">
-                  Income
-                </p>
+          <SummaryCard
+            title="Income"
+            value={totalIncome}
+            color="text-cyan-600"
+          />
 
-                <h2 className="text-4xl font-bold text-cyan-600">
-                  ₹{totalIncome.toLocaleString()}
-                </h2>
-              </div>
-            </div>
-
-            <p className="text-xs text-slate-400">Total monthly earnings</p>
-          </div>
-
-          {/* EXPENSES */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <p className="text-sm font-medium text-slate-500 mb-2">
-                  Expenses
-                </p>
-
-                <h2 className="text-4xl font-bold text-red-500">
-                  ₹{totalExpense.toLocaleString()}
-                </h2>
-              </div>
-            </div>
-
-            <p className="text-xs text-slate-400">Current month spending</p>
-          </div>
+          {/* EXPENSE */}
+          <SummaryCard
+            title="Expenses"
+            value={totalExpense}
+            color="text-red-500"
+          />
 
           {/* SAVINGS */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <p className="text-sm font-medium text-slate-500 mb-2">
-                  Savings
-                </p>
-
-                <h2
-                  className={`text-4xl font-bold ${
-                    totalSavings >= 0 ? "text-green-600" : "text-red-500"
-                  }`}
-                >
-                  ₹{totalSavings.toLocaleString()}
-                </h2>
-              </div>
-            </div>
-
-            <p className="text-xs text-slate-400">Remaining monthly balance</p>
-          </div>
+          <SummaryCard
+            title="Savings"
+            value={totalSavings}
+            color={totalSavings >= 0 ? "text-green-600" : "text-red-500"}
+          />
         </div>
 
         {/* CHART */}
@@ -288,13 +264,16 @@ function Savings() {
 
 function SummaryCard({ title, value, color }) {
   return (
-    <div className={statCard}>
-      <p className={statLabel}>{title}</p>
+    <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <p className="text-sm font-medium text-slate-500 mb-2">{title}</p>
 
-      <p className={`${statValue} ${color}`}>
-        Rs.
-        {Number(value || 0).toLocaleString()}
-      </p>
+          <h2 className={`text-4xl font-bold ${color}`}>
+            ₹{Number(value).toLocaleString()}
+          </h2>
+        </div>
+      </div>
     </div>
   );
 }

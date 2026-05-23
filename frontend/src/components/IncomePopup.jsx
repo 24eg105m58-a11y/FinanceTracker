@@ -1,5 +1,6 @@
 import { useForm } from "react-hook-form";
-import axios from "axios";
+import { useState } from "react";
+
 import api from "../services/api";
 
 import {
@@ -12,15 +13,19 @@ import {
 
 const MAX_INCOME = 1000000000;
 
-function IncomePopup({ onClose, onIncomeAdded }) {
+function IncomePopup({ onClose, onIncomeAdded, selectedMonth }) {
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm();
 
+  const [serverError, setServerError] = useState("");
+
   const addIncome = async (data) => {
     try {
+      setServerError("");
+
       const parsedIncome = parseInt(data.income);
 
       if (!parsedIncome || parsedIncome <= 0) {
@@ -29,10 +34,10 @@ function IncomePopup({ onClose, onIncomeAdded }) {
 
       const res = await api.post("/income-api/addIncome", {
         income: parsedIncome,
+
         incomeDate: new Date(),
-        month: `${new Date().getFullYear()}-${String(
-          new Date().getMonth() + 1,
-        ).padStart(2, "0")}`,
+
+        month: selectedMonth,
       });
 
       if (res?.data?.payload) {
@@ -45,6 +50,8 @@ function IncomePopup({ onClose, onIncomeAdded }) {
         "Adding income failed:",
         err?.response?.data || err.message,
       );
+
+      setServerError(err?.response?.data?.message || "Failed to save income");
     }
   };
 
@@ -104,6 +111,10 @@ function IncomePopup({ onClose, onIncomeAdded }) {
 
             {errors.income && (
               <p className={`${errorClass} mt-2`}>{errors.income.message}</p>
+            )}
+
+            {serverError && (
+              <p className={`${errorClass} mt-2`}>{serverError}</p>
             )}
           </div>
 

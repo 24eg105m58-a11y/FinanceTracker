@@ -33,8 +33,6 @@ import AlertPanel from "./AlertPanel";
 import { useMonthStore } from "../store/monthStore";
 
 function Overall() {
-  const { isNewUser } = useAuth((state) => state);
-
   const { selectedDate, setSelectedDate } = useMonthStore();
 
   const selectedMonth = selectedDate.slice(0, 7);
@@ -52,6 +50,10 @@ function Overall() {
   const [showIncomePopup, setShowIncomePopup] = useState(false);
 
   const [loading, setLoading] = useState(true);
+
+  // =========================================
+  // FETCH DATA
+  // =========================================
 
   const fetchOverallData = async () => {
     try {
@@ -93,9 +95,6 @@ function Overall() {
       setBudgetAlert(budgetAlertRes.data);
 
       setSavingsAlert(savingsAlertRes.data);
-
-      // ONLY OPEN IF NO INCOME
-      setShowIncomePopup(!fetchedIncome);
     } catch (err) {
       console.error("Overall dashboard fetch failed:", err);
     } finally {
@@ -103,9 +102,54 @@ function Overall() {
     }
   };
 
+  // =========================================
+  // FETCH ON MONTH CHANGE
+  // =========================================
+
   useEffect(() => {
     fetchOverallData();
   }, [selectedDate]);
+
+  // =========================================
+  // HANDLE POPUP
+  // =========================================
+
+  useEffect(() => {
+    // WAIT FOR API
+    if (loading) return;
+
+    // INCOME EXISTS
+    if (income && Number(income.income) > 0) {
+      localStorage.setItem("incomeAdded", "true");
+
+      localStorage.removeItem("incomePopupDismissed");
+
+      setShowIncomePopup(false);
+
+      return;
+    }
+
+    // USER CLOSED POPUP
+    const dismissed = localStorage.getItem("incomePopupDismissed");
+
+    if (!dismissed) {
+      setShowIncomePopup(true);
+    }
+  }, [income, loading]);
+
+  // =========================================
+  // CLOSE POPUP
+  // =========================================
+
+  const handleCloseIncomePopup = () => {
+    localStorage.setItem("incomePopupDismissed", "true");
+
+    setShowIncomePopup(false);
+  };
+
+  // =========================================
+  // TOTALS
+  // =========================================
 
   const totalIncome = Number(income?.income || 0);
 
@@ -117,6 +161,10 @@ function Overall() {
   const totalSavings = totalIncome - totalExpense;
 
   const chartData = buildCategoryChartData(expenses, totalIncome);
+
+  // =========================================
+  // LOADING
+  // =========================================
 
   if (loading) {
     return (
@@ -131,17 +179,23 @@ function Overall() {
   return (
     <div className={`${pageBackground} overflow-x-hidden`}>
       <div className={`${pageWrapper} w-full min-w-0`}>
+        {/* INCOME POPUP */}
         {showIncomePopup && (
           <IncomePopup
-            onClose={() => setShowIncomePopup(false)}
+            onClose={handleCloseIncomePopup}
             onIncomeAdded={(newIncome) => {
               setIncome(newIncome);
+
+              localStorage.setItem("incomeAdded", "true");
+
+              localStorage.removeItem("incomePopupDismissed");
 
               setShowIncomePopup(false);
             }}
           />
         )}
 
+        {/* INCOME DETAILS */}
         {showIncomeDetails && (
           <IncomeDetailsPopup
             income={income}
@@ -153,7 +207,6 @@ function Overall() {
 
         {/* TOP BAR */}
         <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-5 mb-8">
-          {/* LEFT */}
           <div className="min-w-0">
             <h1 className={`${headingClass} break-words`}>
               Financial Dashboard
@@ -164,7 +217,6 @@ function Overall() {
             </p>
           </div>
 
-          {/* RIGHT */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-4 w-full xl:w-auto">
             <div className="w-full sm:w-auto">
               <label className="block text-xs font-medium text-slate-500 mb-1">
@@ -192,150 +244,95 @@ function Overall() {
         {/* SUMMARY */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 mb-8">
           {/* INCOME */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm hover:-translate-y-1 hover:shadow-lg transition-all duration-300 overflow-hidden">
-            <div className="flex items-center justify-between mb-4">
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-slate-500 mb-2">
-                  Income
-                </p>
+          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
+            <p className="text-sm font-medium text-slate-500 mb-2">Income</p>
 
-                <h2 className="text-2xl sm:text-3xl xl:text-4xl font-bold text-cyan-600 break-words">
-                  ₹{totalIncome.toLocaleString()}
-                </h2>
-              </div>
-            </div>
+            <h2 className="text-4xl font-bold text-cyan-600">
+              ₹{totalIncome.toLocaleString()}
+            </h2>
 
-            <p className="text-xs text-slate-400">Total monthly earnings</p>
+            <p className="text-xs text-slate-400 mt-3">
+              Total monthly earnings
+            </p>
           </div>
 
-          {/* EXPENSES */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm hover:-translate-y-1 hover:shadow-lg transition-all duration-300 overflow-hidden">
-            <div className="flex items-center justify-between mb-4">
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-slate-500 mb-2">
-                  Expenses
-                </p>
+          {/* EXPENSE */}
+          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
+            <p className="text-sm font-medium text-slate-500 mb-2">Expenses</p>
 
-                <h2 className="text-2xl sm:text-3xl xl:text-4xl font-bold text-red-500 break-words">
-                  ₹{totalExpense.toLocaleString()}
-                </h2>
-              </div>
-            </div>
+            <h2 className="text-4xl font-bold text-red-500">
+              ₹{totalExpense.toLocaleString()}
+            </h2>
 
-            <p className="text-xs text-slate-400">Current month spending</p>
+            <p className="text-xs text-slate-400 mt-3">
+              Current month spending
+            </p>
           </div>
 
           {/* SAVINGS */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm hover:-translate-y-1 hover:shadow-lg transition-all duration-300 overflow-hidden">
-            <div className="flex items-center justify-between mb-4">
-              <div className="min-w-0">
-                <p className="text-sm font-medium text-slate-500 mb-2">
-                  Savings
-                </p>
+          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
+            <p className="text-sm font-medium text-slate-500 mb-2">Savings</p>
 
-                <h2
-                  className={`text-2xl sm:text-3xl xl:text-4xl font-bold break-words ${
-                    totalSavings >= 0 ? "text-green-600" : "text-red-500"
-                  }`}
-                >
-                  ₹{totalSavings.toLocaleString()}
-                </h2>
-              </div>
-            </div>
+            <h2
+              className={`text-4xl font-bold ${
+                totalSavings >= 0 ? "text-green-600" : "text-red-500"
+              }`}
+            >
+              ₹{totalSavings.toLocaleString()}
+            </h2>
 
-            <p className="text-xs text-slate-400">Remaining monthly balance</p>
+            <p className="text-xs text-slate-400 mt-3">
+              Remaining monthly balance
+            </p>
           </div>
         </div>
 
-        {/* GRAPH */}
-        <div
-          className={`${glassCard} bg-gradient-to-br from-white to-slate-50 border border-slate-200 shadow-[0_8px_30px_rgba(0,0,0,0.04)] min-h-[430px] mb-6 overflow-hidden`}
-        >
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-            <div className="min-w-0">
+        {/* CHART */}
+        <div className={`${glassCard} mb-6`}>
+          <div className="flex items-center justify-between mb-5">
+            <div>
               <h2 className={subHeadingClass}>Spending Overview</h2>
 
-              <p className="text-sm text-slate-400 mt-1 break-words">
+              <p className="text-sm text-slate-400 mt-1">
                 Category-wise expense & savings analysis
               </p>
             </div>
-
-            <div className="bg-slate-100 text-slate-500 text-xs px-3 py-1 rounded-full whitespace-nowrap self-start sm:self-auto">
-              Monthly Analytics
-            </div>
           </div>
 
-          <div className="w-full overflow-x-auto">
-            <div className="min-w-[320px] h-[320px] sm:h-[350px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} barGap={12}>
-                  <CartesianGrid
-                    strokeDasharray="3 3"
-                    stroke="#e2e8f0"
-                    vertical={false}
-                  />
+          <div className="w-full h-[350px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData} barGap={12}>
+                <CartesianGrid strokeDasharray="3 3" />
 
-                  <XAxis
-                    dataKey="category"
-                    tick={{
-                      fill: "#64748b",
-                      fontSize: 12,
-                    }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
+                <XAxis dataKey="category" />
 
-                  <YAxis
-                    tick={{
-                      fill: "#64748b",
-                      fontSize: 12,
-                    }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
+                <YAxis />
 
-                  <Tooltip
-                    contentStyle={{
-                      borderRadius: "16px",
-                      border: "1px solid #e2e8f0",
-                      boxShadow: "0 8px 24px rgba(0,0,0,0.08)",
-                    }}
-                  />
+                <Tooltip />
 
-                  <Legend />
+                <Legend />
 
-                  <Bar
-                    dataKey="expenses"
-                    fill="#dc2626"
-                    name="Expenses"
-                    radius={[10, 10, 0, 0]}
-                  />
+                <Bar
+                  dataKey="expenses"
+                  fill="#dc2626"
+                  name="Expenses"
+                  radius={[10, 10, 0, 0]}
+                />
 
-                  <Bar
-                    dataKey="savings"
-                    fill="#16a34a"
-                    name="Savings"
-                    radius={[10, 10, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
+                <Bar
+                  dataKey="savings"
+                  fill="#16a34a"
+                  name="Savings"
+                  radius={[10, 10, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
           </div>
         </div>
 
         {/* ALERTS */}
-        <div
-          className={`${glassCard} border border-slate-200 shadow-[0_8px_30px_rgba(0,0,0,0.04)] overflow-hidden`}
-        >
-          <div className="flex items-center justify-between mb-5">
-            <div className="min-w-0">
-              <h2 className={subHeadingClass}>Alerts</h2>
-
-              <p className="text-sm text-slate-400 mt-1 break-words">
-                Budget and savings status
-              </p>
-            </div>
-          </div>
+        <div className={glassCard}>
+          <h2 className={`${subHeadingClass} mb-4`}>Alerts</h2>
 
           <AlertPanel budgetAlert={budgetAlert} savingsAlert={savingsAlert} />
         </div>
@@ -343,6 +340,10 @@ function Overall() {
     </div>
   );
 }
+
+// =========================================
+// CHART DATA
+// =========================================
 
 function buildCategoryChartData(expenses, income) {
   const categories = [

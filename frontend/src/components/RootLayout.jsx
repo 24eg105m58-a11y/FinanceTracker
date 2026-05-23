@@ -1,20 +1,33 @@
-import { Outlet } from "react-router";
-import Header from "./Header";
-import SessionExpiredModal from "./SessionExpiredModal";
+import { useEffect } from "react";
+import { Outlet } from "react-router-dom";
 
-import { useSessionStore } from "../store/sessionStore";
+import api from "../services/api";
+
+import { useAuth } from "../store/authStore";
 
 function RootLayout() {
-  const sessionExpired = useSessionStore((state) => state.sessionExpired);
+  const setAuth = useAuth((state) => state.setAuth);
 
-  return (
-    <>
-      <Header />
-      <Outlet />
+  const clearAuth = useAuth((state) => state.clearAuth);
 
-      <SessionExpiredModal open={sessionExpired} />
-    </>
-  );
+  useEffect(() => {
+    const restoreSession = async () => {
+      try {
+        const res = await api.get("/user-api/user");
+
+        setAuth({
+          user: res.data.payload,
+          isNewUser: false,
+        });
+      } catch (err) {
+        clearAuth();
+      }
+    };
+
+    restoreSession();
+  }, []);
+
+  return <Outlet />;
 }
 
 export default RootLayout;

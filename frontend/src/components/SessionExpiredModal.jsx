@@ -1,6 +1,8 @@
 import {
   useSessionStore,
 } from "../store/sessionStore";
+import { useAuth } from "../store/authStore";
+import api from "../services/api";
 
 function SessionExpiredModal({
   open,
@@ -9,6 +11,10 @@ function SessionExpiredModal({
   const {
     setSessionExpired,
   } = useSessionStore();
+
+  const clearAuth = useAuth(
+    (state) => state.clearAuth
+  );
 
   if (!open) {
     return null;
@@ -51,15 +57,16 @@ function SessionExpiredModal({
     false
   );
 
-  // REMOVE TOKEN
-  localStorage.removeItem(
-    "token"
-  );
-  
-  // REMOVE SESSION
-localStorage.removeItem(
-  "sessionExpiry"
-);
+  // RESET AUTH STATE
+  clearAuth();
+
+  // CLEAR SERVER COOKIE (BEST EFFORT)
+  api.get(
+    "/user-api/logout",
+    {
+      withCredentials: true,
+    }
+  ).catch(() => {});
 
   // RESET MONTH
   localStorage.removeItem(

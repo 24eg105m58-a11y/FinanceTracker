@@ -14,6 +14,17 @@ export const useAuth =
 
     isNewUser: false,
 
+    authChecked: false,
+
+    clearAuth: () =>
+      set({
+        currentUser: null,
+        isAuthenticated: false,
+        error: null,
+        loading: false,
+        isNewUser: false,
+      }),
+
     // =====================================================
     // REGISTER
     // =====================================================
@@ -70,18 +81,6 @@ export const useAuth =
           201
         ) {
 
-          // SESSION EXPIRY
-          const expiryTime =
-            Date.now() +
-            2 *
-              60 *
-              1000;
-
-          localStorage.setItem(
-            "sessionExpiry",
-            expiryTime
-          );
-
           set({
 
             currentUser:
@@ -98,6 +97,8 @@ export const useAuth =
             isNewUser:
               res.data
                 .isNewUser,
+
+            authChecked: true,
           });
 
           return res.data;
@@ -121,6 +122,8 @@ export const useAuth =
               ?.data
               ?.message ||
             "Registration failed",
+
+          authChecked: true,
         });
 
         throw err;
@@ -171,18 +174,6 @@ export const useAuth =
           200
         ) {
 
-          // SESSION EXPIRY
-          const expiryTime =
-            Date.now() +
-            2 *
-              60 *
-              1000;
-
-          localStorage.setItem(
-            "sessionExpiry",
-            expiryTime
-          );
-
           set({
 
             currentUser:
@@ -198,6 +189,8 @@ export const useAuth =
 
             isNewUser:
               false,
+
+            authChecked: true,
           });
 
           return res.data;
@@ -221,6 +214,8 @@ export const useAuth =
               ?.data
               ?.message ||
             "Login failed",
+
+          authChecked: true,
         });
 
         throw err;
@@ -237,64 +232,33 @@ export const useAuth =
 
         set({
           loading: true,
+          error: null,
         });
 
-        const res =
-          await api.get(
+        await api
+          .get("/user-api/logout", {
+            withCredentials: true,
+          })
+          .catch(() => {});
 
-            "/user-api/logout",
-
-            {
-              withCredentials:
-                true,
-            }
-          );
-
-        if (
-          res.status ===
-          200
-        ) {
-
-          localStorage.removeItem(
-            "sessionExpiry"
-          );
-
-          set({
-
-            currentUser:
-              null,
-
-            isAuthenticated:
-              false,
-
-            error: null,
-
-            loading:
-              false,
-
-            isNewUser:
-              false,
-          });
-        }
+        set({
+          currentUser: null,
+          isAuthenticated: false,
+          error: null,
+          loading: false,
+          isNewUser: false,
+          authChecked: true,
+        });
 
       } catch (err) {
 
         set({
-
-          loading:
-            false,
-
-          isAuthenticated:
-            false,
-
-          currentUser:
-            null,
-
-          error:
-            err.response
-              ?.data
-              ?.message ||
-            "Logout failed",
+          currentUser: null,
+          isAuthenticated: false,
+          error: null,
+          loading: false,
+          isNewUser: false,
+          authChecked: true,
         });
       }
     },
@@ -334,6 +298,8 @@ export const useAuth =
             false,
 
           error: null,
+
+          authChecked: true,
         });
 
       } catch (err) {
@@ -348,6 +314,8 @@ export const useAuth =
 
           loading:
             false,
+
+          authChecked: true,
         });
       }
     },

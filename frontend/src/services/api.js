@@ -9,7 +9,69 @@ const backendUrl =
     .VITE_BACKEND_URL ||
     ""
   ).replace(/\/$/, "");
-console.log(import.meta.env.VITE_BACKEND_URL);
+
+const PUBLIC_PATHS = new Set([
+  "/",
+  "/login",
+  "/register",
+]);
+
+const isPublicPath = (
+  pathname
+) =>
+  PUBLIC_PATHS.has(
+    pathname
+  );
+
+const showSessionExpiredIfNeeded =
+  () => {
+
+    const sessionState =
+      useSessionStore.getState();
+
+    if (
+      sessionState
+        .sessionExpired
+    ) {
+      return;
+    }
+
+    import(
+      "../store/authStore"
+    )
+      .then(
+        ({ useAuth }) => {
+
+          const authState =
+            useAuth.getState();
+
+          if (
+            !authState.isAuthenticated
+          ) {
+            return;
+          }
+
+          authState.clearAuth?.();
+          sessionState.setSessionExpired(
+            true
+          );
+        }
+      )
+      .catch(() => {
+        // ignore
+      });
+  };
+
+const requestUrlIncludes =
+  (error, needle) => {
+    const url =
+      error?.config?.url;
+
+    return String(
+      url || ""
+    ).includes(needle);
+  };
+
 const api = axios.create({
 
   baseURL:
@@ -40,23 +102,18 @@ api.interceptors.response.use(
     const currentPath =
       window.location.pathname;
 
-    // ONLY SHOW POPUP
-    // IF NOT ALREADY
-    // ON LOGIN PAGE
-
     if (
       error.response
         ?.status === 401 &&
-
-      currentPath !==
-      "/login"
+      !isPublicPath(
+        currentPath
+      ) &&
+      !requestUrlIncludes(
+        error,
+        "/user-api/logout"
+      )
     ) {
-
-      useSessionStore
-        .getState()
-        .setSessionExpired(
-          true
-        );
+      showSessionExpiredIfNeeded();
     }
 
     return Promise.reject(

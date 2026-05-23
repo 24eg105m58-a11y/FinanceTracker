@@ -1,6 +1,10 @@
-import { useEffect } from "react";
-
-import { createBrowserRouter, RouterProvider } from "react-router";
+import {
+  createBrowserRouter,
+  Navigate,
+  Outlet,
+  RouterProvider,
+  useLocation,
+} from "react-router";
 
 import RootLayout from "./components/RootLayout";
 
@@ -16,89 +20,40 @@ import Profile from "./components/Profile";
 import SessionExpiredModal from "./components/SessionExpiredModal";
 
 import { useSessionStore } from "./store/sessionStore";
+import { useAuth } from "./store/authStore";
+
+function ProtectedOutlet() {
+  const isAuthenticated = useAuth(
+    (state) => state.isAuthenticated
+  );
+
+  const authChecked = useAuth(
+    (state) => state.authChecked
+  );
+
+  const location = useLocation();
+
+  if (!authChecked) {
+    return null;
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <Navigate
+        to="/login"
+        replace
+        state={{
+          from: location.pathname,
+        }}
+      />
+    );
+  }
+
+  return <Outlet />;
+}
 
 function App() {
   const { sessionExpired } = useSessionStore();
-
-  // AUTO SESSION EXPIRY CHECK
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const expiry = localStorage.getItem("sessionExpiry");
-
-      if (!expiry) {
-        return;
-      }
-
-      const isExpired = Date.now() >= Number(expiry);
-
-      if (isExpired) {
-        localStorage.removeItem("sessionExpiry");
-
-        useSessionStore.getState().setSessionExpired(true);
-
-        clearInterval(interval);
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  // ROUTES
-
-  const routerObj = createBrowserRouter([
-    {
-      path: "/",
-
-      element: <RootLayout />,
-
-      errorElement: <Home />,
-
-      children: [
-        {
-          index: true,
-
-          element: <Home />,
-        },
-
-        {
-          path: "register",
-
-          element: <Register />,
-        },
-
-        {
-          path: "login",
-
-          element: <Login />,
-        },
-
-        {
-          path: "overall",
-
-          element: <Overall />,
-        },
-
-        {
-          path: "expenses",
-
-          element: <Expenses />,
-        },
-
-        {
-          path: "savings",
-
-          element: <Savings />,
-        },
-
-        {
-          path: "profile",
-
-          element: <Profile />,
-        },
-      ],
-    },
-  ]);
 
   return (
     <>
@@ -110,3 +65,47 @@ function App() {
 }
 
 export default App;
+
+// ROUTES (keep router stable; don't recreate on state changes)
+const routerObj = createBrowserRouter([
+  {
+    path: "/",
+    element: <RootLayout />,
+    errorElement: <Home />,
+    children: [
+      {
+        index: true,
+        element: <Home />,
+      },
+      {
+        path: "register",
+        element: <Register />,
+      },
+      {
+        path: "login",
+        element: <Login />,
+      },
+      {
+        element: <ProtectedOutlet />,
+        children: [
+          {
+            path: "overall",
+            element: <Overall />,
+          },
+          {
+            path: "expenses",
+            element: <Expenses />,
+          },
+          {
+            path: "savings",
+            element: <Savings />,
+          },
+          {
+            path: "profile",
+            element: <Profile />,
+          },
+        ],
+      },
+    ],
+  },
+]);

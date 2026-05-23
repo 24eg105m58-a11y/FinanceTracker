@@ -13,6 +13,12 @@ const { sign } = jwt;
 
 export const userApp = exp.Router();
 
+const SESSION_DURATION_MS =
+  24 * 60 * 60 * 1000;
+
+const SESSION_DURATION_JWT =
+  "24h";
+
 const isSecureRequest = (req) =>
   Boolean(
     req.secure ||
@@ -30,9 +36,9 @@ const getCookieOptions = (req) => {
 
   return {
     httpOnly: true,
-    secure: true,
-    sameSite: "none",
-    maxAge: 2 * 60 * 60 * 1000,
+    secure,
+    sameSite: secure ? "none" : "lax",
+    maxAge: SESSION_DURATION_MS,
   };
 };
 
@@ -45,7 +51,7 @@ const createToken = (user) => {
       Name: user.Name,
     },
     process.env.SECRET_KEY,
-    { expiresIn: "2h" }
+    { expiresIn: SESSION_DURATION_JWT }
   );
 };
 

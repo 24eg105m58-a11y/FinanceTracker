@@ -169,7 +169,7 @@ function Home() {
               </div>
             </div>
 
-            FLOATING CARD
+            {/* FLOATING CARD */}
             <div className="absolute -bottom-8 -left-6 bg-white rounded-3xl border border-slate-200 shadow-xl p-5 w-64 hidden md:block">
 
               <div className="flex items-center gap-3 mb-3">

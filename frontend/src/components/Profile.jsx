@@ -351,7 +351,7 @@ function Profile() {
 
       await logout();
 
-      navigate("/login");
+      navigate("/");
     };
 
   return (

@@ -73,13 +73,13 @@ function Savings() {
 
       const selectedMonth = selectedDate.slice(0, 7);
 
-      const selectedSavingsRes = await api.get("/saving-api/get-savings", {
+      const selectedSavingsRes = await api.get("/savings-api/get-savings", {
         params: {
           month: selectedMonth,
         },
       });
 
-      const goalRes = await api.get("/saving-api/goal", {
+      const goalRes = await api.get("/savings-api/goal", {
         params: {
           month: selectedMonth,
         },
